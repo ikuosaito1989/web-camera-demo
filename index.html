@@ -85,6 +85,7 @@
     },
     methods: {
       onChange() {
+        this.focusDistance.isSupport = this.focusMode === "manual"
         const track = this.video.srcObject.getVideoTracks()[0];
         track.applyConstraints({
           advanced : [{focusMode: this.focusMode}]
@@ -131,11 +132,7 @@
             this.focusDistance.max = capabilities.focusDistance.max;
             this.focusDistance.value = track.getSettings().focusDistance;
             input.oninput = (event) => {
-              if (this.focusMode !== "manual") {
-                this.focusDistance.isSupport = false
-                return;
-              }
-              this.focusDistance.isSupport = true
+              this.focusDistance.isSupport = this.focusMode === "manual"
               this.focusDistance.value = event.target.value
               track.applyConstraints({
                 advanced : [{focusMode: "manual", focusDistance: event.target.value}]
