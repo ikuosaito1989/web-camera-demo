@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  </head>
+  <body>
+    <div id="app">
+      <div>
+        <span>devicePixelRatio : </span>
+        <input v-model='devicePixelRatio' type="number" />
+      </div>
+      
+      <div v-if="focusDistance.isSupport">
+        <span>focusDistance : {{ focusDistance.value }}</span>
+        <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
+        <input type="range" hidden style="width: 80%;height: 50px;">
+      </div>
+
+      <div style="text-align: center;">
+        <video ref="video" id="video" width="100%" height="100%" autoplay></video>
+        
+        <button type="button" class="btn btn-success btn-lg btn-block" v-on:click="capture()">撮る</button>
+        <button type="button" class="btn btn-secondary btn-lg btn-block" @click="changeFacingMode()">カメラ切り替え</button>
+        <canvas ref="canvas" id="canvas"></canvas>
+        
+        <div class="capture" v-for="capture in captures" :key="capture.d">
+          <img :src="capture"  width="100%" height="100%"/>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: {
+      video: {},
+      canvas: {},
+      captures: [],
+      front: false,
+      devicePixelRatio: window.devicePixelRatio,
+      focusDistance: {
+        min: 0,
+        max: 0,
+        value: 0,
+        isSupport: false
+      }
+    },
+    computed: {
+      constraints() {
+        return { 
+          video: { 
+            facingMode: (this.front? { exact: "environment" } : "user" ) ,
+            width: { ideal: 1000 },
+            height: { ideal: 750 },
+            aspectRatio: 4/3
+          }
+        }
+      },
+    },
+    mounted () {
+      this.video = this.$refs.video
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        this._playVideo()
+      }
+    },
+    methods: {
+      changeFacingMode () {
+        this.front = !this.front
+        this._playVideo()
+      },
+      capture () {
+        this.canvas = this.$refs.canvas
+        var scale = this.devicePixelRatio;
+        this.canvas.height = this.video.clientHeight * scale
+        this.canvas.width = this.video.clientWidth * scale
+        this.canvas.getContext('2d').drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height)
+        this.captures.push(this.canvas.toDataURL('image/jpeg'))
+      },
+      _playVideo () {
+        if(this.video.srcObject){
+          this.video.srcObject.getVideoTracks().forEach(video => {
+            video.stop();
+          });
+        }
+
+        navigator.mediaDevices.getUserMedia(this.constraints).then(async stream => {
+          await new Promise(r => setTimeout(r, 500))
+          
+          this.video.srcObject = stream
+          const track = stream.getVideoTracks()[0];
+          const capabilities = track.getCapabilities();
+
+          if (capabilities.focusDistance) {
+            this.focusDistance.isSupport = true
+            const input = document.querySelector('input[type="range"]');
+            input.min = capabilities.focusDistance.min;
+            input.max = capabilities.focusDistance.max;
+            input.step = capabilities.focusDistance.step;
+            input.value = track.getSettings().focusDistance;
+            this.focusDistance.min = capabilities.focusDistance.min;
+            this.focusDistance.max = capabilities.focusDistance.max;
+            this.focusDistance.value = track.getSettings().focusDistance;
+            input.oninput = (event) => {
+              this.focusDistance.value = event.target.value
+              track.applyConstraints({
+                advanced : [{focusMode: "manual", focusDistance: event.target.value}]
+              });
+            }
+            input.hidden = false;
+          } else {
+            alert('focusDistanceがサポートされていません！')
+          }
+        })
+      },
+    }
+  });
+</script>
+
+<style>
+  
+  #canvas {
+    display: none;
+  }
+  .capture {
+    /* display: inline; */
+    padding: 5px;
+  }
+  </style>
