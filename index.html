@@ -84,14 +84,13 @@
     },
     methods: {
       onChange() {
-        try {
-          const track = this.video.srcObject.getVideoTracks()[0];
-          track.applyConstraints({
-            advanced : [{focusMode: this.focusMode}]
-          });
-        }catch(e) {
-          alert(e.message)
-        }
+        const track = this.video.srcObject.getVideoTracks()[0];
+        track.applyConstraints({
+          advanced : [{focusMode: this.focusMode}]
+        })
+        .catch((e) => {
+          alert(e.message + ' : ' + this.focusMode)
+        });
       },
       changeFacingMode () {
         this.front = !this.front
