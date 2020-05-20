@@ -14,6 +14,16 @@
         <input v-model='devicePixelRatio' type="number" />
       </div>
       
+      <div class="form-group">
+        <label>focusMode select</label>
+        <select v-model="focusMode" @change="onChange" class="form-control">
+          <option>manual</option>
+          <option>single-shot</option>
+          <option>continuous</option>
+        </select>
+      </div>
+      <span>focusMode: {{ focusMode }}</span>
+      
       <div v-if="focusDistance.isSupport">
         <span>focusDistance : {{ focusDistance.value }}</span>
         <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
@@ -50,7 +60,8 @@
         max: 0,
         value: 0,
         isSupport: false
-      }
+      },
+      focusMode: 'manual'
     },
     computed: {
       constraints() {
@@ -72,6 +83,16 @@
       }
     },
     methods: {
+      onChange() {
+        try {
+          const track = this.video.srcObject.getVideoTracks()[0];
+          track.applyConstraints({
+            advanced : [{focusMode: this.focusMode}]
+          });
+        }catch(e) {
+          alert(e.message)
+        }
+      },
       changeFacingMode () {
         this.front = !this.front
         this._playVideo()
@@ -109,6 +130,11 @@
             this.focusDistance.max = capabilities.focusDistance.max;
             this.focusDistance.value = track.getSettings().focusDistance;
             input.oninput = (event) => {
+              if (this.focusMode !== "manual") {
+                this.focusDistance.isSupport = false
+                return;
+              }
+              this.focusDistance.isSupport = true
               this.focusDistance.value = event.target.value
               track.applyConstraints({
                 advanced : [{focusMode: "manual", focusDistance: event.target.value}]
