@@ -18,6 +18,7 @@
         <label>focusMode select</label>
         <select v-model="focusMode" @change="onChange" class="form-control">
           <option>manual</option>
+          <option>none</option>
           <option>single-shot</option>
           <option>continuous</option>
         </select>
@@ -94,6 +95,7 @@
       },
       changeFacingMode () {
         this.front = !this.front
+        this.focusMode = 'manual'
         this._playVideo()
       },
       capture () {
