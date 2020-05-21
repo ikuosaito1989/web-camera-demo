@@ -9,33 +9,45 @@
   </head>
   <body>
     <div id="app">
-      <div>
-        <span>devicePixelRatio : </span>
-        <input v-model='devicePixelRatio' type="number" />
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="inputGroup-sizing-default">devicePixelRatio</span>
+        </div>
+        <input type="number" v-model='devicePixelRatio' class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
       </div>
       
-      <div class="form-group">
-        <label>focusMode select</label>
-        <select v-model="focusMode" @change="onChange" class="form-control">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text">focusMode</label>
+        </div>
+        <select v-model="focusMode" @change="onChange" class="custom-select">
           <option>manual</option>
           <option>none</option>
           <option>single-shot</option>
           <option>continuous</option>
         </select>
       </div>
-      <span>focusMode: {{ focusMode }}</span>
-      
+
       <div v-if="focusDistance.isSupport">
         <span>focusDistance : {{ focusDistance.value }}</span>
         <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
         <input type="range" hidden style="width: 80%;height: 50px;">
       </div>
 
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text">facingMode</label>
+        </div>
+        <select v-model="facingMode" @change="onChangeFacingMode" class="custom-select">
+          <option>user</option>
+          <option>environment</option>
+        </select>
+      </div>
+
       <div style="text-align: center;">
         <video ref="video" id="video" width="100%" height="100%" autoplay></video>
         
         <button type="button" class="btn btn-success btn-lg btn-block" v-on:click="capture()">撮る</button>
-        <button type="button" class="btn btn-secondary btn-lg btn-block" @click="changeFacingMode()">カメラ切り替え</button>
         <canvas ref="canvas" id="canvas"></canvas>
         
         <div class="capture" v-for="capture in captures" :key="capture.d">
@@ -62,19 +74,21 @@
         value: 0,
         isSupport: false
       },
-      focusMode: 'manual'
+      focusMode: 'manual',
+      facingMode: 'user'
     },
     computed: {
       constraints() {
         return { 
           video: { 
-            facingMode: (this.front? { exact: "environment" } : "user" ) ,
-            width: { ideal: 1000 },
-            height: { ideal: 750 },
+            facingMode: "user",
             aspectRatio: 4/3
           }
         }
       },
+      track() {
+        return this.video.srcObject.getVideoTracks()[0]
+      }
     },
     mounted () {
       this.video = this.$refs.video
@@ -86,18 +100,18 @@
     methods: {
       onChange() {
         this.focusDistance.isSupport = this.focusMode === "manual"
-        const track = this.video.srcObject.getVideoTracks()[0];
-        track.applyConstraints({
-          advanced : [{focusMode: this.focusMode}]
-        })
-        .catch((e) => {
-          alert(e.message + ' : ' + this.focusMode)
-        });
+        this.track.applyConstraints({advanced : [{focusMode: this.focusMode}]})
+          .catch((e) => {
+            alert(e.message + ' : ' + this.focusMode)
+          });
       },
-      changeFacingMode () {
-        this.front = !this.front
-        this.focusMode = 'manual'
-        this._playVideo()
+      onChangeFacingMode () {
+        this._stopVideo()
+        const constraints = { facingMode: (this.facingMode === 'environment' ? { exact: "environment" } : "user" ) }
+        this.track.applyConstraints(constraints)
+          .catch((e) => {
+            alert(e.message + ' : ' + this.facingMode)
+          });
       },
       capture () {
         this.canvas = this.$refs.canvas
@@ -107,13 +121,17 @@
         this.canvas.getContext('2d').drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height)
         this.captures.push(this.canvas.toDataURL('image/jpeg'))
       },
-      _playVideo () {
+      _stopVideo () {
         if(this.video.srcObject){
           this.video.srcObject.getVideoTracks().forEach(video => {
             video.stop();
           });
         }
+      },
+      _playVideo () {
 
+        this._stopVideo()
+        
         navigator.mediaDevices.getUserMedia(this.constraints).then(async stream => {
           await new Promise(r => setTimeout(r, 500))
           
