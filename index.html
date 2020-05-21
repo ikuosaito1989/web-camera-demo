@@ -31,7 +31,7 @@
       <div v-if="focusDistance.isSupport">
         <span>focusDistance : {{ focusDistance.value }}</span>
         <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
-        <input type="range" hidden style="width: 80%;height: 50px;">
+        <input ref="focusDistanceRange" type="range" hidden style="width: 80%;height: 50px;">
       </div>
 
       <div class="input-group mb-3">
@@ -41,6 +41,16 @@
         <select v-model="facingMode" @change="onChangeFacingMode" class="custom-select">
           <option>user</option>
           <option>environment</option>
+        </select>
+      </div>
+
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text">aspectRatio</label>
+        </div>
+        <select v-model="aspectRatio" @change="onChangeAspectRatio" class="custom-select">
+          <option>4/3</option>
+          <option>16/9</option>
         </select>
       </div>
 
@@ -75,7 +85,8 @@
         isSupport: false
       },
       focusMode: 'manual',
-      facingMode: 'user'
+      facingMode: 'user',
+      aspectRatio: '4/3'
     },
     computed: {
       constraints() {
@@ -101,7 +112,10 @@
       }
     },
     methods: {
-      onChangeFocusMode() {
+      async onChangeAspectRatio() {
+        this._applyConstraints({aspectRatio : this.aspectRatio === '4/3' ? 4/3 : 16/9 })
+      },
+      async onChangeFocusMode() {
         let constraints = {}
         if (this.focusMode === "manual") {
 
@@ -111,7 +125,7 @@
           }
 
           this.focusDistance.isSupport = true
-          const input = document.querySelector('input[type="range"]');
+          const input = this.$refs.focusDistanceRange
           input.min = this.capabilities.focusDistance.min;
           input.max = this.capabilities.focusDistance.max;
           input.step = this.capabilities.focusDistance.step;
@@ -134,10 +148,7 @@
           constraints = [{focusMode: this.focusMode}]
         }
 
-        this.track.applyConstraints({advanced : constraints})
-          .catch((e) => {
-            alert(e.message + ' : ' + this.focusMode)
-          });
+        this._applyConstraints({advanced : constraints})
       },
       onChangeFacingMode () {
         this._stopVideo()
@@ -152,20 +163,30 @@
         this.canvas.getContext('2d').drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height)
         this.captures.push(this.canvas.toDataURL('image/jpeg'))
       },
+      async _applyConstraints(constraints) {
+        try {
+          await this.track.applyConstraints(constraints)
+        } catch(e) {
+          alert(`${e.name} : ${e.message}`)
+        }
+      },
+      async _playVideo () {
+        this._stopVideo()
+        try {
+          const stream  = await navigator.mediaDevices.getUserMedia(this.constraints)
+          // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
+          // await new Promise(r => setTimeout(r, 500))
+          this.video.srcObject = stream
+        } catch(e) {
+          alert(e.name)
+        }
+      },
       _stopVideo () {
         if(this.video.srcObject){
           this.video.srcObject.getVideoTracks().forEach(video => {
             video.stop();
           });
         }
-      },
-      _playVideo () {
-        this._stopVideo()
-
-        navigator.mediaDevices.getUserMedia(this.constraints).then(async stream => {
-          // await new Promise(r => setTimeout(r, 500))
-          this.video.srcObject = stream
-        })
       },
     }
   });
