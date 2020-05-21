@@ -139,7 +139,7 @@
           constraints = [{focusMode: this.focusMode}]
         }
 
-        this._applyConstraints({advanced : constraints})
+        this._applyConstraints({advanced : [constraints]})
       },
       onChangeFacingMode () {
         this.constraints.video.facingMode = (this.facingMode === 'environment' ? { exact: "environment" } : "user" )
