@@ -28,12 +28,10 @@
         </select>
       </div>
 
-      <div v-if="focusDistance.isSupport">
-        <span>focusDistance : {{ focusDistance.value }}</span>
-        <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
-        <input ref="focusDistanceRange" type="range" hidden style="width: 80%;height: 50px;">
-      </div>
-
+      <span>focusDistance : {{ focusDistance.value }}</span>
+      <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
+      <input ref="focusDistanceRange" type="range" style="width: 80%;height: 50px;">
+      
       <div class="input-group mb-3">
         <div class="input-group-prepend">
           <label class="input-group-text">facingMode</label>
@@ -106,10 +104,7 @@
     },
     mounted () {
       this.video = this.$refs.video
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        this._playVideo()
-      }
+      this._playVideo()
     },
     methods: {
       async onChangeAspectRatio() {
@@ -175,15 +170,19 @@
         this._playVideo()
       },
       async _playVideo () {
-        this._stopVideo()
-        try {
-          const stream  = await navigator.mediaDevices.getUserMedia(this.constraints)
-          // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
-          // await new Promise(r => setTimeout(r, 500))
-          this.video.srcObject = stream
-        } catch(e) {
-          alert(e.name)
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          this._stopVideo()
+
+          try {
+            const stream  = await navigator.mediaDevices.getUserMedia(this.constraints)
+            // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
+            // await new Promise(r => setTimeout(r, 500))
+            this.video.srcObject = stream
+          } catch(e) {
+            alert(e.name)
+          }  
         }
+        
       },
       _stopVideo () {
         if(this.video.srcObject){
