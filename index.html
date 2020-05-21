@@ -50,7 +50,7 @@
 
       <span>focusDistance : {{ focusDistance.value }}</span>
       <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
-      <input ref="focusDistanceRange" type="range" style="width: 80%;height: 50px;">
+      <input ref="focusDistanceRange" hidden type="range" style="width: 80%;height: 50px;">
       
       <div class="input-group mb-3">
         <div class="input-group-prepend">
@@ -78,12 +78,12 @@
         <div>
           <div>zoom : {{ zoom.value }}</div>
           <div>({{ zoom.min }} ~ {{ zoom.max }})</div>
-          <input ref="zoom" type="range" style="width: 80%;height: 50px;">
+          <input ref="zoom" type="range" hidden style="width: 80%;height: 50px;">
         </div>
         <div>
           <div>colorTemperature : {{ colorTemperature.value }}</div>
           <div>({{ colorTemperature.min }} ~ {{ colorTemperature.max }})</div>
-          <input ref="colorTemperature" type="range" style="width: 80%;height: 50px;">
+          <input ref="colorTemperature" type="range" hidden style="width: 80%;height: 50px;">
         </div>
 
         <button type="button" class="btn btn-success btn-lg btn-block" v-on:click="capture()">撮る</button>
@@ -135,7 +135,7 @@
       constraints() {
         return { 
           video: { 
-            facingMode: { exact: "environment" },
+            facingMode: (this.front? { exact: "environment" } : "user" ) ,
             aspectRatio: 4/3
           }
         }
@@ -175,6 +175,7 @@
           this.focusDistance.max = this.capabilities.focusDistance.max;
           this.focusDistance.value = this.track.getSettings().focusDistance;
           constraints = {focusMode: this.focusMode, focusDistance: this.focusDistance.value}
+          input.hidden = false;
           input.oninput = (event) => {
             if (this.focusMode !== "manual")
               return
@@ -191,7 +192,7 @@
         this._applyConstraints({advanced : [constraints]})
       },
       onChangeFacingMode () {
-        this.constraints.video.facingMode = (this.facingMode === 'environment' ? { exact: "environment" } : "user" )
+        this.front = this.facingMode === 'environment'
         this._playVideo()
       },
       initZoom () {
@@ -201,6 +202,7 @@
           this.zoom.max = input.max = this.capabilities.zoom.max;
           input.step = this.capabilities.zoom.step;
           this.zoom.value = input.value = this.track.getSettings().zoom;
+          input.hidden = false;
           input.oninput = (event) => {
             this.zoom.value = event.target.value
             this.track.applyConstraints({
@@ -216,6 +218,7 @@
           this.colorTemperature.max = input.max = this.capabilities.colorTemperature.max;
           input.step = this.capabilities.colorTemperature.step;
           this.colorTemperature.value = input.value = this.track.getSettings().colorTemperature;
+          input.hidden = false;
           input.oninput = (event) => {
             this.colorTemperature.value = event.target.value
             this.track.applyConstraints({ advanced : [{
