@@ -80,6 +80,11 @@
           <div>({{ zoom.min }} ~ {{ zoom.max }})</div>
           <input ref="zoom" type="range" style="width: 80%;height: 50px;">
         </div>
+        <div>
+          <div>colorTemperature : {{ colorTemperature.value }}</div>
+          <div>({{ colorTemperature.min }} ~ {{ colorTemperature.max }})</div>
+          <input ref="colorTemperature" type="range" style="width: 80%;height: 50px;">
+        </div>
 
         <button type="button" class="btn btn-success btn-lg btn-block" v-on:click="capture()">撮る</button>
         <canvas ref="canvas" id="canvas"></canvas>
@@ -112,6 +117,11 @@
         value: 0,
       },
       zoom: {
+        min: 0,
+        max: 0,
+        value: 0,
+      },
+      colorTemperature: {
         min: 0,
         max: 0,
         value: 0,
@@ -199,6 +209,22 @@
           }
         }
       },
+      initWhiteBalanceMode () {
+        if (this.capabilities.colorTemperature) {
+          const input = this.$refs.colorTemperature
+          this.colorTemperature.min = input.min = this.capabilities.colorTemperature.min;
+          this.colorTemperature.max = input.max = this.capabilities.colorTemperature.max;
+          input.step = this.capabilities.colorTemperature.step;
+          this.colorTemperature.value = input.value = this.track.getSettings().colorTemperature;
+          input.oninput = (event) => {
+            this.colorTemperature.value = event.target.value
+            this.track.applyConstraints({ advanced : [{
+                whiteBalanceMode: "manual",
+                colorTemperature: event.target.value,
+              }]});
+          }
+        }
+      },
       capture () {
         this.canvas = this.$refs.canvas
         var scale = this.devicePixelRatio;
@@ -229,6 +255,7 @@
             await new Promise(r => setTimeout(r, 500))
             this.onChangeFocusMode()
             this.initZoom()
+            this.initWhiteBalanceMode()
             this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
               settings: ${JSON.stringify(this.track.getSettings())}`
           } catch(e) {
