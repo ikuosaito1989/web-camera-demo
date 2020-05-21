@@ -75,6 +75,12 @@
       <div style="text-align: center;">
         <video ref="video" id="video" width="100%" height="100%" autoplay></video>
         
+        <div>
+          <div>zoom : {{ zoom.value }}</div>
+          <div>({{ zoom.min }} ~ {{ zoom.max }})</div>
+          <input ref="zoom" type="range" style="width: 80%;height: 50px;">
+        </div>
+
         <button type="button" class="btn btn-success btn-lg btn-block" v-on:click="capture()">撮る</button>
         <canvas ref="canvas" id="canvas"></canvas>
         
@@ -101,6 +107,11 @@
       front: false,
       devicePixelRatio: window.devicePixelRatio,
       focusDistance: {
+        min: 0,
+        max: 0,
+        value: 0,
+      },
+      zoom: {
         min: 0,
         max: 0,
         value: 0,
@@ -173,6 +184,21 @@
         this.constraints.video.facingMode = (this.facingMode === 'environment' ? { exact: "environment" } : "user" )
         this._rebootVideo()
       },
+      initZoom () {
+        if (this.capabilities.zoom) {
+          const input = this.$refs.zoom
+          this.zoom.min = input.min = this.capabilities.zoom.min;
+          this.zoom.max = input.max = this.capabilities.zoom.max;
+          input.step = this.capabilities.zoom.step;
+          this.zoom.value = input.value = this.track.getSettings().zoom;
+          input.oninput = (event) => {
+            this.zoom.value = event.target.value
+            this.track.applyConstraints({
+              advanced : [{zoom: event.target.value}]
+            });
+          }
+        }
+      },
       capture () {
         this.canvas = this.$refs.canvas
         var scale = this.devicePixelRatio;
@@ -202,6 +228,7 @@
             // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
             await new Promise(r => setTimeout(r, 500))
             this.onChangeFocusMode()
+            this.initZoom()
             this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
               settings: ${JSON.stringify(this.track.getSettings())}`
           } catch(e) {
