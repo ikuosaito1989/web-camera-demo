@@ -127,9 +127,11 @@
           this.focusDistance.min = this.capabilities.focusDistance.min;
           this.focusDistance.max = this.capabilities.focusDistance.max;
           this.focusDistance.value = this.track.getSettings().focusDistance;
-          constraints = {focusMode: "manual", focusDistance: this.focusDistance.value}
+          constraints = {focusMode: this.focusMode, focusDistance: this.focusDistance.value}
           input.oninput = (event) => {
-            this.focusDistance.isSupport = this.focusMode === "manual"
+            if (this.focusMode !== "manual")
+              return
+              
             this.focusDistance.value = event.target.value
             this.track.applyConstraints({
               advanced : [{focusMode: "manual", focusDistance: event.target.value}]
