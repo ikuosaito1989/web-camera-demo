@@ -175,9 +175,10 @@
 
           try {
             const stream  = await navigator.mediaDevices.getUserMedia(this.constraints)
-            // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
-            // await new Promise(r => setTimeout(r, 500))
             this.video.srcObject = stream
+            // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
+            await new Promise(r => setTimeout(r, 500))
+            this.onChangeFocusMode()
           } catch(e) {
             alert(e.name)
           }  
