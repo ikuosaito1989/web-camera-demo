@@ -113,7 +113,8 @@
     },
     methods: {
       async onChangeAspectRatio() {
-        this._applyConstraints({aspectRatio : this.aspectRatio === '4/3' ? 4/3 : 16/9 })
+        this.constraints.video.aspectRatio = this.aspectRatio === '4/3' ? 4/3 : 16/9
+        this._rebootVideo()
       },
       async onChangeFocusMode() {
         let constraints = {}
@@ -151,9 +152,8 @@
         this._applyConstraints({advanced : constraints})
       },
       onChangeFacingMode () {
-        this._stopVideo()
         this.constraints.video.facingMode = (this.facingMode === 'environment' ? { exact: "environment" } : "user" )
-        this._playVideo()
+        this._rebootVideo()
       },
       capture () {
         this.canvas = this.$refs.canvas
@@ -169,6 +169,10 @@
         } catch(e) {
           alert(`${e.name} : ${e.message}`)
         }
+      },
+      _rebootVideo () {
+        this._stopVideo()
+        this._playVideo()
       },
       async _playVideo () {
         this._stopVideo()
