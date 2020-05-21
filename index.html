@@ -155,7 +155,7 @@
       
       async onChangeAspectRatio() {
         this.constraints.video.aspectRatio = this.aspectRatio === '4/3' ? 4/3 : 16/9
-        this._rebootVideo()
+        this._playVideo()
       },
       async onChangeFocusMode() {
         let constraints = {}
@@ -192,7 +192,7 @@
       },
       onChangeFacingMode () {
         this.constraints.video.facingMode = (this.facingMode === 'environment' ? { exact: "environment" } : "user" )
-        this._rebootVideo()
+        this._playVideo()
       },
       initZoom () {
         if (this.capabilities.zoom) {
@@ -240,14 +240,9 @@
           alert(`${e.name} : ${e.message}`)
         }
       },
-      _rebootVideo () {
-        this._stopVideo()
-        this._playVideo()
-      },
       async _playVideo () {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           this._stopVideo()
-
           try {
             const stream  = await navigator.mediaDevices.getUserMedia(this.constraints)
             this.video.srcObject = stream
