@@ -20,7 +20,7 @@
         <div class="input-group-prepend">
           <label class="input-group-text">focusMode</label>
         </div>
-        <select v-model="focusMode" @change="onChange" class="custom-select">
+        <select v-model="focusMode" @change="onChangeFocusMode" class="custom-select">
           <option>manual</option>
           <option>none</option>
           <option>single-shot</option>
@@ -88,6 +88,9 @@
       },
       track() {
         return this.video.srcObject.getVideoTracks()[0]
+      },
+      capabilities() {
+        return this.track.getCapabilities()
       }
     },
     mounted () {
@@ -98,20 +101,48 @@
       }
     },
     methods: {
-      onChange() {
-        this.focusDistance.isSupport = this.focusMode === "manual"
-        this.track.applyConstraints({advanced : [{focusMode: this.focusMode}]})
+      onChangeFocusMode() {
+        let constraints = {}
+        if (this.focusMode === "manual") {
+
+          if (!this.capabilities.focusDistance) {
+            alert(`Unsupported constraint(s) : ${this.focusMode}`)
+            return;
+          }
+
+          this.focusDistance.isSupport = true
+          const input = document.querySelector('input[type="range"]');
+          input.min = this.capabilities.focusDistance.min;
+          input.max = this.capabilities.focusDistance.max;
+          input.step = this.capabilities.focusDistance.step;
+          input.value = track.getSettings().focusDistance;
+          input.hidden = false;
+          this.focusDistance.min = this.capabilities.focusDistance.min;
+          this.focusDistance.max = this.capabilities.focusDistance.max;
+          this.focusDistance.value = track.getSettings().focusDistance;
+          constraints = [{focusMode: "manual", focusDistance: this.focusDistance.value}]
+          this.focusDistance.isSupport = true
+          input.oninput = (event) => {
+            this.focusDistance.isSupport = this.focusMode === "manual"
+            this.focusDistance.value = event.target.value
+            track.applyConstraints({
+              advanced : [{focusMode: "manual", focusDistance: event.target.value}]
+            });
+          }
+        } else {
+          this.focusDistance.isSupport = false
+          constraints = [{focusMode: this.focusMode}]
+        }
+
+        this.track.applyConstraints({advanced : constraints})
           .catch((e) => {
             alert(e.message + ' : ' + this.focusMode)
           });
       },
       onChangeFacingMode () {
         this._stopVideo()
-        const constraints = { facingMode: (this.facingMode === 'environment' ? { exact: "environment" } : "user" ) }
-        this.track.applyConstraints(constraints)
-          .catch((e) => {
-            alert(e.message + ' : ' + this.facingMode)
-          });
+        this.constraints.video.facingMode = (this.facingMode === 'environment' ? { exact: "environment" } : "user" )
+        this._playVideo()
       },
       capture () {
         this.canvas = this.$refs.canvas
@@ -129,37 +160,11 @@
         }
       },
       _playVideo () {
-
         this._stopVideo()
-        
-        navigator.mediaDevices.getUserMedia(this.constraints).then(async stream => {
-          await new Promise(r => setTimeout(r, 500))
-          
-          this.video.srcObject = stream
-          const track = stream.getVideoTracks()[0];
-          const capabilities = track.getCapabilities();
 
-          if (capabilities.focusDistance) {
-            this.focusDistance.isSupport = true
-            const input = document.querySelector('input[type="range"]');
-            input.min = capabilities.focusDistance.min;
-            input.max = capabilities.focusDistance.max;
-            input.step = capabilities.focusDistance.step;
-            input.value = track.getSettings().focusDistance;
-            this.focusDistance.min = capabilities.focusDistance.min;
-            this.focusDistance.max = capabilities.focusDistance.max;
-            this.focusDistance.value = track.getSettings().focusDistance;
-            input.oninput = (event) => {
-              this.focusDistance.isSupport = this.focusMode === "manual"
-              this.focusDistance.value = event.target.value
-              track.applyConstraints({
-                advanced : [{focusMode: "manual", focusDistance: event.target.value}]
-              });
-            }
-            input.hidden = false;
-          } else {
-            alert('Unsupported focusDistance')
-          }
+        navigator.mediaDevices.getUserMedia(this.constraints).then(async stream => {
+          // await new Promise(r => setTimeout(r, 500))
+          this.video.srcObject = stream
         })
       },
     }
