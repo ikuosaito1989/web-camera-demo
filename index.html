@@ -47,11 +47,12 @@
           <option>continuous</option>
         </select>
       </div>
+      <div v-if="focusMode === 'manual'">
+        <span>focusDistance : {{ focusDistance.value }}</span>
+        <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
+        <input ref="focusDistanceRange" hidden type="range" style="width: 80%;height: 50px;">
+      </div>
 
-      <span>focusDistance : {{ focusDistance.value }}</span>
-      <span>({{ focusDistance.min }} ~ {{ focusDistance.max }})</span>
-      <input ref="focusDistanceRange" hidden type="range" style="width: 80%;height: 50px;">
-      
       <div class="input-group mb-3">
         <div class="input-group-prepend">
           <label class="input-group-text">facingMode</label>
