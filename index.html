@@ -256,6 +256,10 @@
         }
       },
       capture () {
+        // @note videoを一瞬止めて撮影した動きを再現する
+        this.video.pause();
+        setTimeout( () => { this.video.play();}, 500);
+
         this.canvas = this.$refs.canvas
         var scale = this.devicePixelRatio;
         this.canvas.height = this.video.clientHeight * scale
