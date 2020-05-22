@@ -206,7 +206,7 @@
           input.oninput = (event) => {
             this.zoom.value = event.target.value
             this.track.applyConstraints({
-              advanced : [{focusMode: "manual", zoom: event.target.value}]
+              advanced : [{ zoom: event.target.value }]
             });
           }
         }
@@ -245,29 +245,28 @@
       },
       async _playVideo () {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          this._stopVideo()
+
+          if(this.video.srcObject){
+            this.video.srcObject.getVideoTracks().forEach(video => {
+              video.stop();
+            });
+          }
+
           try {
-            const stream  = await navigator.mediaDevices.getUserMedia(this.constraints)
-            this.video.srcObject = stream
-            // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
-            await new Promise(r => setTimeout(r, 500))
-            this.onChangeFocusMode()
-            this.initZoom()
-            this.initWhiteBalanceMode()
-            this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
-              settings: ${JSON.stringify(this.track.getSettings())}`
+            this.video.srcObject = await navigator.mediaDevices.getUserMedia(this.constraints)
           } catch(e) {
-            alert(e.name)
-          }  
+            alert(`${e.name} : ${e.message}`)
+          }
+          
+          // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
+          await new Promise(r => setTimeout(r, 500))
+          this.onChangeFocusMode()
+          this.initZoom()
+          this.initWhiteBalanceMode()
+          this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
+            settings: ${JSON.stringify(this.track.getSettings())}`
         }
         
-      },
-      _stopVideo () {
-        if(this.video.srcObject){
-          this.video.srcObject.getVideoTracks().forEach(video => {
-            video.stop();
-          });
-        }
       },
     }
   });
