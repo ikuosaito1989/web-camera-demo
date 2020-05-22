@@ -126,10 +126,11 @@
         max: 0,
         value: 0,
       },
-      focusMode: 'manual',
+      focusMode: '',
       facingMode: 'user',
       aspectRatio: '4/3',
-      supportStatus: ''
+      supportStatus: '',
+      track: null
     },
     computed: {
       constraints() {
@@ -139,9 +140,6 @@
             aspectRatio: 4/3
           }
         }
-      },
-      track() {
-        return this.video.srcObject.getVideoTracks()[0]
       },
       capabilities() {
         return this.track.getCapabilities()
@@ -253,14 +251,15 @@
           }
 
           try {
-            this.video.srcObject = await navigator.mediaDevices.getUserMedia(this.constraints)
+            const stream = await navigator.mediaDevices.getUserMedia(this.constraints)
+            this.video.srcObject = stream
+            this.track = stream.getVideoTracks()[0]
           } catch(e) {
             alert(`${e.name} : ${e.message}`)
           }
-          
+
           // @note getVideoTracksを利用する場合起動するまで時間がかかるので少し待つ必要がある
           await new Promise(r => setTimeout(r, 500))
-          this.onChangeFocusMode()
           this.initZoom()
           this.initWhiteBalanceMode()
           this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
