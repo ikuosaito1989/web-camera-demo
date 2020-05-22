@@ -206,7 +206,7 @@
           input.oninput = (event) => {
             this.zoom.value = event.target.value
             this.track.applyConstraints({
-              advanced : [{zoom: event.target.value}]
+              advanced : [{focusMode: "manual", zoom: event.target.value}]
             });
           }
         }
