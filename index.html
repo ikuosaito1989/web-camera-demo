@@ -87,6 +87,12 @@
           <input ref="colorTemperature" type="range" hidden style="width: 80%;height: 50px;">
         </div>
 
+        <div>
+          <div>exposureMode : {{ exposureMode.value }}</div>
+          <div>({{ exposureMode.min }} ~ {{ exposureMode.max }})</div>
+          <input ref="exposureMode" type="range" hidden style="width: 80%;height: 50px;">
+        </div>
+
         <button type="button" class="btn btn-success btn-lg btn-block" v-on:click="capture()">撮る</button>
         <canvas ref="canvas" id="canvas"></canvas>
         
@@ -127,6 +133,11 @@
         max: 0,
         value: 0,
       },
+      exposureMode: {
+        min: 0,
+        max: 0,
+        value: 0,
+      },
       focusMode: '',
       facingMode: 'user',
       aspectRatio: '4/3',
@@ -138,7 +149,7 @@
         return { 
           video: { 
             facingMode: (this.front? { exact: "environment" } : "user" ) ,
-            aspectRatio: 4/3
+            aspectRatio: 4/3,
           }
         }
       },
@@ -227,6 +238,23 @@
           }
         }
       },
+      initExposureMode () {
+        if (this.capabilities.exposureMode) {
+          const input = this.$refs.exposureMode
+          this.exposureMode.min = input.min = this.capabilities.exposureMode.min;
+          this.exposureMode.max = input.max = this.capabilities.exposureMode.max;
+          input.step = this.capabilities.exposureMode.step;
+          this.exposureMode.value = input.value = this.track.getSettings().exposureMode;
+          input.hidden = false;
+          input.oninput = (event) => {
+            this.exposureMode.value = event.target.value
+            this.track.applyConstraints({ advanced : [{
+                exposureMode: "manual",
+                exposureCompensation: event.target.value,
+              }]});
+          }
+        }
+      },
       capture () {
         this.canvas = this.$refs.canvas
         var scale = this.devicePixelRatio;
@@ -263,6 +291,7 @@
           await new Promise(r => setTimeout(r, 500))
           this.initZoom()
           this.initWhiteBalanceMode()
+          this.initExposureMode()
           this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
             settings: ${JSON.stringify(this.track.getSettings())}`
         }
