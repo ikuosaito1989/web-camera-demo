@@ -38,6 +38,20 @@
       
       <div class="input-group mb-3">
         <div class="input-group-prepend">
+          <span class="input-group-text" id="inputGroup-sizing-default">width</span>
+        </div>
+        <input type="number" v-model='width' class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="inputGroup-sizing-default">height</span>
+        </div>
+        <input type="number" v-model='height' class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+      </div>
+      <button type="button" class="btn btn-primary mb-3" @click="onChangeSize">
+        Change Size
+      </button>
+
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
           <label class="input-group-text">focusMode</label>
         </div>
         <select v-model="focusMode" @change="onChangeFocusMode" class="custom-select">
@@ -142,13 +156,17 @@
       facingMode: 'user',
       aspectRatio: '4/3',
       supportStatus: '',
-      track: null
+      track: null,
+      width: 1000,
+      height: 750
     },
     computed: {
       constraints() {
         return { 
           video: { 
             facingMode: (this.front? { exact: "environment" } : "user" ) ,
+            width: { ideal: this.width },
+            height: { ideal: this.height },
             aspectRatio: 4/3,
           }
         }
@@ -204,6 +222,12 @@
       onChangeFacingMode () {
         this.front = this.facingMode === 'environment'
         this._playVideo()
+      },
+      onChangeSize() {
+        this._applyConstraints({
+          width: { ideal: this.width },
+          height: { ideal: this.height }
+          })
       },
       initZoom () {
         if (this.capabilities.zoom) {
@@ -297,7 +321,7 @@
           this.initWhiteBalanceMode()
           this.initExposureMode()
           this.no_scaling()
-          this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
+          this.supportStatus = `add sizechange, capabilities: ${JSON.stringify(this.capabilities)}
             settings: ${JSON.stringify(this.track.getSettings())}`
         }
       },
