@@ -149,8 +149,6 @@
         return { 
           video: { 
             facingMode: (this.front? { exact: "environment" } : "user" ) ,
-            width: { ideal: window.screen.width * window.devicePixelRatio },
-            height: { ideal: window.screen.height * window.devicePixelRatio },
             aspectRatio: 4/3,
           }
         }
@@ -299,7 +297,7 @@
           this.initWhiteBalanceMode()
           this.initExposureMode()
           this.no_scaling()
-          this.supportStatus = `add window.devicePixelRatio, capabilities: ${JSON.stringify(this.capabilities)}
+          this.supportStatus = `capabilities: ${JSON.stringify(this.capabilities)}
             settings: ${JSON.stringify(this.track.getSettings())}`
         }
       },
